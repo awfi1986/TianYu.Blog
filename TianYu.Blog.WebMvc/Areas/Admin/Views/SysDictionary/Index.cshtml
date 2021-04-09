@@ -1,0 +1,210 @@
+﻿@using TianYu.Blog.Domain.DomainModel
+@model List<SysMenu>
+<style>
+    .layui-colla-title { height: auto }
+    .layui-colla-title label.nlbl { width: auto }
+    .layui-btn-group + .layui-btn-group { margin-left: auto; }
+    .layui-btn-group { margin-right: 8px; }
+</style>
+<fieldset class="layui-elem-field">
+    <legend>搜索</legend>
+    <div class="layui-field-box">
+        <div class="layui-inline">
+            <input class="layui-input" name="KeyWords" autocomplete="off" layui-type="search" placeholder="字典名称/字典编码">
+        </div>
+        <button class="layui-btn" data-type="search" id="btnSearch">搜索</button>
+    </div>
+</fieldset>
+<script type="text/html" id="toolbarList">
+    <div class="layui-btn-container">
+        @Html.Raw(ViewBag.ButtonHtml)
+    </div>
+</script>
+<script type="text/html" id="toolbarList2">
+    <div class="layui-btn-container">
+        @Html.Raw(ViewBag.ButtonHtml2)
+    </div>
+</script>
+<div class="layui-row">
+    <div class="layui-col-xs5">
+        <table class="layui-hide" lay-filter="tblList" id="tblList"></table>
+    </div>
+    <div class="layui-col-xs7">
+        <table class="layui-hide" lay-filter="tblList2" id="tblList2"></table>
+    </div>
+</div>
+@section Scripts{
+    <script type="text/javascript">
+        var pageIndex = 1, curParentId = 0;
+        var active;
+        $(function () {
+            layui.use(['table', 'form'], function () {
+                var $ = layui.$, table = layui.table, form = layui.form;
+                var tblList = table.render({
+                    elem: '#tblList'
+                    , url: '/admin/sysdictionary/getlist' + getSearchKeys() + "&parentid=-1"
+                    , toolbar: '#toolbarList'
+                    , defaultToolbar: ['filter', 'print']//['filter', 'print', 'exports']
+                    , cellMinWidth: 150
+                    , page: {
+                        layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                        , curr: 1                                                   //当前页码
+                        , groups: 3                                                 //显示页码数
+                        , first: false                                              //不显示首页
+                        , last: false                                               //不显示尾页
+                    }
+                    , cols: [[
+                        { type: 'checkbox' },
+                        { field: 'dictionaryName', title: '字典名称' },
+                        { field: 'dictionaryCode', title: '字典编码' },
+                        { field: 'sort', title: '排序' }
+                    ]]
+                });
+                var tblList2 = table.render({
+                    elem: '#tblList2'
+                    , url: '/admin/sysdictionary/getlist?parentid=' + curParentId
+                    , toolbar: '#toolbarList2'
+                    , defaultToolbar: ['filter', 'print']//['filter', 'print', 'exports']
+                    , cellMinWidth: 150
+                    , page: {
+                        layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                        , curr: 1                                                   //当前页码
+                        , groups: 9                                                 //显示页码数
+                        , first: false                                              //不显示首页
+                        , last: false                                               //不显示尾页
+                    }
+                    , cols: [[
+                        { type: 'checkbox' },
+                        { field: 'dictionaryName', title: '字典名称' },
+                        { field: 'dictionaryCode', title: '字典编码' },
+                        { field: 'sort', title: '排序' }
+                    ]]
+                });
+                //监听点击行事件
+                table.on('row(tblList)', function (obj) {
+                    var data = obj.data;
+                    curParentId = data.id;
+                    //标注选中样式
+                    obj.tr.addClass('layui-table-click').siblings().removeClass('layui-table-click');
+                    $("input[name='layTableCheckbox']").prop("checked", false);
+                    $(".layui-table-body .layui-form-checkbox").removeClass("layui-form-checked");
+                    obj.tr.find("input[name='layTableCheckbox']").prop("checked", true).siblings(".layui-form-checkbox").addClass("layui-form-checked");
+                    $(".layui-collapse .layui-form-checkbox").removeClass("layui-form-checked");
+                    $("input[name='mcbox'],input[name='bcbox']").prop("checked", false);
+                    active.search2();
+                });
+                //头工具栏事件
+                table.on('toolbar(tblList)', function (obj) {
+                    var checkStatus = table.checkStatus(obj.config.id);
+                    var data = checkStatus.data;
+                    switch (obj.event) {
+                        case 'add':
+                            win.open("/admin/sysdictionary/addedit?parentId=-1", 450, 350, "新增");
+                            break;
+                        case 'edit':
+                            if (data != "") {
+                                win.open("/admin/sysdictionary/addedit?id=" + data[0].id, 450, 350, "编辑");
+                            } else {
+                                win.info("请选择要编辑的角色");
+                            }
+                            break;
+                        case 'del':
+                            if (data != "") {
+                                var ids = [];
+                                $(data).each(function (i, item) {
+                                    ids.push(item.id);
+                                }); 
+                                win.confirm("确认要删除吗？", function () {
+                                    $.post("/admin/sysdictionary/remove", { ids: ids }, function (res) {
+                                        if (res.code == 0) {
+                                            win.success("删除成功");
+                                            getList();
+                                        } else {
+                                            win.alert(res.message);
+                                        }
+                                    });
+                                });
+                            } else {
+                                win.info("请选择要删除的角色");
+                            }
+                            break;
+                    };
+                });
+                //头工具栏事件
+                table.on('toolbar(tblList2)', function (obj) {
+                    var checkStatus = table.checkStatus(obj.config.id);
+                    var data = checkStatus.data;
+                    switch (obj.event) {
+                        case 'add':
+                            win.open("/admin/sysdictionary/addedit?parentId=" + curParentId, 450, 350, "新增");
+                            break;
+                        case 'edit':
+                            if (data != "") {
+                                win.open("/admin/sysdictionary/addedit?id=" + data[0].id, 450, 350, "编辑");
+                            } else {
+                                win.info("请选择要编辑的角色");
+                            }
+                            break;
+                        case 'del':
+                            if (data != "") {
+                                var ids = [];
+                                $(data).each(function (i, item) {
+                                    ids.push(item.id);
+                                }); 
+                                win.confirm("确认要删除吗？", function () {
+                                    $.post("/admin/sysdictionary/remove", { ids: ids }, function (res) {
+                                         if (res.code == 0) {
+                                            win.success("删除成功");
+                                            getList2();
+                                        } else {
+                                            win.alert(res.message);
+                                        }
+                                    });
+                                });
+                            } else {
+                                win.info("请选择要删除的角色");
+                            }
+                            break;
+                    };
+                });
+                active = {
+                    search: function () {
+                        //执行搜索并重载角色
+                        tblList.reload({
+                            url: "/admin/sysdictionary/getlist" + getSearchKeys() + "&parentid=-1",
+                            page: {
+                                layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                                , curr: 1                                                   //当前页码
+                                , groups: 9                                                 //显示页码数
+                                , first: false                                              //不显示首页
+                                , last: false                                               //不显示尾页
+                            }
+                        });
+                    },
+                    search2: function () {
+                        //执行搜索并重载角色
+                        tblList2.reload({
+                            url: "/admin/sysdictionary/getlist" + getSearchKeys() + "&parentid=" + curParentId,
+                            page: {
+                                layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                                , curr: 1                                                   //当前页码
+                                , groups: 9                                                 //显示页码数
+                                , first: false                                              //不显示首页
+                                , last: false                                               //不显示尾页
+                            }
+                        });
+                    }
+                };
+                //搜索按钮
+                $('#btnSearch').on('click', function () {
+                    var type = $(this).data('type');
+                    active[type] ? active[type].call(this) : '';
+                });
+            });
+        }); 
+
+        function getList2() {
+            active.search2();
+        }
+    </script>
+}

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SqlSugar\SqlSugar.csproj" />
+    <ProjectReference Include="..\TianYu.Blog.Infrastructure\TianYu.Blog.Infrastructure.csproj" />
+    <ProjectReference Include="..\TianYu.Core.Common\TianYu.Core.Common.csproj" />
+    <PackageReference Include="Microsoft.NETCore.Targets" Version="3.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,130 @@
+﻿<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ output extension="/" #> 
+  
+<#@ include file="$(ProjectDir)/MySqlDbHelper.ttinclude"  #>
+<#@ include file="$(ProjectDir)/Manager.ttinclude"	#> 
+
+
+<#  var manager = new Manager(Host, GenerationEnvironment, true);  
+	var OutputPath1 = Path.GetDirectoryName(Host.TemplateFile+"..");
+	OutputPath1=Path.Combine(OutputPath1,"Admin","Views"); 
+#>
+<# foreach (DbTable item in DbHelper.GetDbTables())
+   { 
+        OutputPath1=Path.Combine(OutputPath1,item.TableName);
+	    if (!Directory.Exists(OutputPath1))
+	    {
+	        Directory.CreateDirectory(OutputPath1);
+	    }
+		manager.StartBlock("Index.cshtml",OutputPath1);//文件名
+#> 
+<fieldset class="layui-elem-field layui-form">
+    <legend>搜索</legend>
+    <div class="layui-field-box">
+        <div class="layui-inline">
+            <input class="layui-input" name="KeyWords" autocomplete="off" placeholder="名称" layui-type="search">
+        </div> 
+        <button class="layui-btn" data-type="search" id="btnSearch">搜索</button>
+    </div>
+</fieldset>
+<script type="text/html" id="toolbarList">
+    <div class="layui-btn-container">
+        @Html.Raw(ViewBag.ButtonHtml)
+    </div>
+</script> 
+<script type="text/html" id="isTop">
+    <input type="checkbox" name="isTop" value="{{d.isTop}}" disabled lay-skin="switch" lay-text="是|否" {{ d.isTop ? 'checked' : '' }}>
+</script>
+<table class="layui-hide" lay-filter="tblList" id="tblList"></table>
+@section Scripts{
+    <script type="text/javascript">
+        var pageIndex = 1;
+        layui.use('table', function () {
+            var $ = layui.$, table = layui.table;
+            var tblList = table.render({
+                elem: '#tblList'
+                , url: '/Admin/<#=item.TableName#>/GetList' + getSearchKeys()
+                , toolbar: '#toolbarList'
+                , defaultToolbar: ['filter', 'print']//['filter', 'print', 'exports']
+                , cellMinWidth: 100
+                , page: {
+                    layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                    , curr: 1                                                   //当前页码
+                    , groups: 9                                                //显示页码数
+                    , first: false                                              //不显示首页
+                    , last: false                                               //不显示尾页
+                }
+                , cols: [[
+                    { type: 'checkbox' },
+                <# foreach(DbColumn mm in DbHelper.GetDbColumns(item.TableSourceName)){#>
+                    { field: '<#=mm.LowerColumnName#>', title: '<#=mm.Remark#>' },<# } #>  
+                    { field: 'createTime', title: '创建时间', align: 'center', templet: function (d) { return $.admin.getFmtDate(d.createTime, 'yyyy-MM-dd HH:mm:ss'); } },
+                    { field: 'modifyTime', title: '修改时间', align: 'center', templet: function (d) { return $.admin.getFmtDate(d.modifyTime, 'yyyy-MM-dd HH:mm:ss'); } }
+                ]]
+            });
+            //头工具栏事件
+            table.on('toolbar(tblList)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+                var data = checkStatus.data;
+                switch (obj.event) {
+                    case 'add':
+                        win.open("/Admin/<#=item.TableName#>/AddEdit", 900, 650, "新增");
+                        break;
+                    case 'edit':
+                        if (data != "") {
+                            win.open("/Admin/<#=item.TableName#>/AddEdit/" + data[0].guid, 900, 650, "编辑");
+                        } else {
+                            win.info("请选择要编辑的内容");
+                        }
+                        break;
+                    case 'del':
+                        if (data != "") {
+                            var guids = [];
+                            $(data).each(function (i, item) {
+                                guids.push(item.guid);
+                            });
+                            win.confirm("确认要删除吗？", function () {
+                                $.post("/Admin/<#=item.TableName#>/Remove", { guids: guids }, function (res) {
+                                    if (res.code == 0) {
+                                        win.success("删除成功");
+                                        getList();
+                                    } else {
+                                        win.alert(res.Message);
+                                    }
+                                });
+                            });
+                        } else {
+                            win.info("请选择要删除的内容");
+                        }
+                        break;
+                };
+            });
+            var active = {
+                search: function () {
+                    //执行搜索并重载用户
+                    tblList.reload({
+                        url: "/Admin/<#=item.TableName#>/GetList" + getSearchKeys(),
+                        page: {
+                            layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                            , curr: 1                                                   //当前页码
+                            , groups: 9                                                 //显示页码数
+                            , first: false                                              //不显示首页
+                            , last: false                                               //不显示尾页
+                        }
+                    });
+                }
+            };
+            //搜索按钮
+            $('#btnSearch').on('click', function () {
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+        });
+    </script>
+}
+	 
+<#
+   manager.EndBlock(); 
+   }
+  manager.Process(true);
+#>

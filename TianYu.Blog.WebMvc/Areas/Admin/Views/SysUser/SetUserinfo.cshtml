@@ -1,0 +1,82 @@
+﻿@{
+    ViewBag.Title = "基础信息";
+}
+<form class="layui-form" method="post" action="/Admin/sysuser/saveuserinfo" id="myForm">
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>账号</label>
+        <div class="layui-input-block">
+            <div style="line-height:2.8;">@Model.UserName</div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>姓名</label>
+        <div class="layui-input-block">
+            <input type="text" name="TrueName" required lay-verify="required" autocomplete="off" class="layui-input" maxlength="128" value="@Model.TrueName">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">旧密码</label>
+        <div class="layui-input-block">
+            <input type="password" name="OldUserPwd" autocomplete="off" class="layui-input" maxlength="16" value="">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">新密码</label>
+        <div class="layui-input-block">
+            <input type="password" name="NewUserPwd" autocomplete="off" class="layui-input" maxlength="16" value="">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">确认新密码</label>
+        <div class="layui-input-block">
+            <input type="password" name="UserPwd" autocomplete="off" class="layui-input" maxlength="16" value="">
+        </div>
+    </div>
+    <div class="layui-form-item" style="height:55px;">
+    </div>
+    <div class="layui-form-item layui-footer">
+        <div class="layui-input-block">
+            <button type="button" class="layui-btn layui-btn-primary" onclick="win.close()">关闭</button>
+            <button type="button" class="layui-btn" lay-submit lay-filter="formSubmit">保存</button>
+        </div>
+    </div>
+</form>
+@section Scripts{
+    <script type="text/javascript">
+        $(function () {
+            layui.use('form', function () {
+                var form = layui.form;
+                //监听提交
+                form.on('submit(formSubmit)', function (data) {
+                    var oldpwd = $("input[name='OldUserPwd']").val();
+                    var newpwd = $("input[name='NewUserPwd']").val();
+                    var pwd = $("input[name='UserPwd']").val();
+                    if (oldpwd != "" && (newpwd == "" || pwd == "")) {
+                        win.alert("请输入新密码");
+                        return;
+                    }
+                    if (oldpwd != "" && newpwd != "" && pwd != "") {
+                        if (newpwd != pwd) {
+                            win.alert("两次输入新密码不一致");
+                            return;
+                        }
+                    }
+                    win.showLoading("正在保存...");
+                    $("#myForm").ajaxSubmit(function (res) {
+                        win.hideLoading();
+                        if (res.code == 300) {
+                            win.alert(res.message);
+                        } else if (res.code == 0) {
+                            if (res.data == 1) {
+                                parent.window.location = "/Admin/Login/LogOut";
+                            }
+                            parent.win.success("保存成功");
+                            win.close();
+                        }
+                    });
+                    return false;
+                });
+            });
+        });
+    </script>
+}

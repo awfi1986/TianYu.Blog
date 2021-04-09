@@ -1,0 +1,134 @@
+﻿@using System.Linq;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>@ViewBag.Title </title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="keywords" content="@ViewBag.Keywords">
+    <meta name="description" content="@ViewBag.Description">
+    <meta name="searchtitle" content="@ViewBag.Keywords" />
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/lib/bootstrap-icons-1.2.2/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="~/Styles/styles.css" rel="stylesheet" />
+    @RenderSection("Styles", false)
+</head>
+<body>
+    <div class="container-fluid header">
+        <div class="row">
+            <div class="col-md-2">
+                <a href="/"> <span style="font-size: 2rem">草堂笔记</span></a>
+            </div>
+            <div class="col-md-10">
+                <ul class="nav nav-tabs">
+                    @if (ViewBag.MenuList != null)
+                    {
+                        var menuList = ViewBag.MenuList as List<TianYu.Blog.Domain.DomainModel.ArticleCategory>;
+
+                        foreach (var item in menuList.Where(o => o.ParentId == -1))
+                        {
+                            var subList = menuList.Where(o => o.ParentId == item.Id);
+                            if (subList.Any())
+                            {
+                                string active = subList.Any(o => o.Id == ViewBag.CategoryId) ? "active" : "";
+
+                                <li role="navigation" class="dropdown">
+                                    <a class="dropdown-toggle @active" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                                        @item.Name <span class="caret"></span>
+                                    </a> <ul class="dropdown-menu">
+                                        @foreach (var subItem in subList)
+                                        {
+                                            if (subItem.Id == ViewBag.CategoryId)
+                                            {
+                                                <li role="presentation"><a class="active" href="/Home/Index?categoryId=@subItem.Id">@subItem.Name</a></li>
+                                            }
+                                            else
+                                            {
+                                                <li role="presentation"><a href="/Home/Index?categoryId=@subItem.Id">@subItem.Name</a></li>
+                                            }
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                            else
+                            {
+                                if (item.Id == ViewBag.CategoryId)
+                                {
+                                    <li role="presentation"><a class="active" href="/Home/Index?categoryId=@item.Id">@item.Name</a></li>
+                                }
+                                else
+                                {
+                                    <li role="presentation"><a href="/Home/Index?categoryId=@item.Id">@item.Name</a></li>
+                                }
+                            }
+                        }
+                    }
+                    <li role="presentation"><a href="http://tools.caotang.xyz" target="_blank">草堂工具</a></li> 
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 left">
+                <div class="plan">
+                    <div class="title"><span>热门文章</span></div>
+                    <div class="conent">
+                        @if (ViewBag.HotList != null)
+                        {
+                            foreach (var m in ViewBag.HotList)
+                            {
+                                <div class="list">
+                                    <a href="/Home/Detail/@m.Guid" title="@m.ArticleTitle">
+                                        <img src="@m.TitleImg" title="@m.ArticleTitle" />
+                                        <div class="tit">
+                                            <p>@m.ArticleTitle</p>
+                                            <span>@m.CreateTime.ToString("yyyy-MM-dd")</span>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="plan">
+                    <div class="title"><span>推荐文章</span></div>
+                    <div class="conent">
+                        @if (ViewBag.RecommendList != null)
+                        {
+                            foreach (var m in ViewBag.RecommendList)
+                            {
+                                <div class="list">
+                                    <a href="/Home/Detail/@m.Guid" title="@m.ArticleTitle">
+                                        <img src="@m.TitleImg" title="@m.ArticleTitle" />
+                                        <div class="tit">
+                                            <p>@m.ArticleTitle</p>
+                                            <span>@m.CreateTime.ToString("yyyy-MM-dd")</span>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9 right">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid footer">
+        <div>
+            Copyright © 2020 caotang.xyz
+        </div>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/popper/umd/popper.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    @RenderSection("Scripts", false)
+</body>
+</html>

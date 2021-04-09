@@ -1,0 +1,37 @@
+﻿
+<div class="warp">
+    <div class="title">
+        @Model.ArticleTitle
+    </div>
+    <div class="body">
+        <div>
+            @Html.Raw(Model.Content)
+        </div>
+        <div class="row">
+            @if (@ViewBag.UpGuid != null)
+            {
+                <div class="col-md-6"><span>前一篇：</span><a href="/Home/Detail/@ViewBag.UpGuid">@ViewBag.UpTitle</a></div>
+            }
+            else
+            {
+                <div class="col-md-6"><span>前一篇：</span><a>没有了</a></div>
+            }
+            @if (@ViewBag.NextGuid != null)
+            {
+                <div class="col-md-6"><span>后一篇：</span><a href="/Home/Detail/@ViewBag.NextGuid">@ViewBag.NextTitle</a></div>
+            }
+            else
+            {
+                <div class="col-md-6"><span>后一篇：</span><a>没有了</a></div>
+            } 
+        </div>
+    </div>
+    @*<div class="title">
+            评论列表
+        </div>
+        <div class="body">
+            <ul>
+                <li>#1楼 2020-07-20 14:47 87Super</li>
+            </ul>
+        </div>*@
+</div>

@@ -1,0 +1,21 @@
+﻿
+@if (Model != null)
+{
+    foreach (var m in Model)
+    {
+        <div class="list">
+            <div class="title"> <a href="/Home/Detail/@m.Guid" title="@m.ArticleTitle">@m.ArticleTitle</a></div>
+            <div class="content">@m.SubTitle</div>
+            <div class="pubinfo">
+                <span><i class="bi bi-calendar3"></i>@m.CreateTime.ToString("yyyy-MM-dd")</span>
+                <span><i class="bi bi-eye"></i>@m.PVCount</span> 
+                <a href="/Home/Detail/@m.Guid" title="@m.ArticleTitle">阅读全文</a>
+            </div>
+        </div>
+    }
+}
+
+
+<div class="paging">
+    @Html.Raw(ViewBag.Paging)
+</div>

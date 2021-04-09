@@ -1,0 +1,125 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout_Edit.cshtml";
+}
+@section Styles{
+    <style type="text/css">
+        .layui-form-label { width: 150px; }
+        .layui-inline { width: 100% }
+        .layui-inline input { width: 100%; }
+        .layui-form-item .layui-input-inline { width: 300px; }
+        .layui-input-block { margin-left: 180px; }
+    </style>
+}
+<form class="layui-form" method="post" action="/admin/sysconfig/save" id="myForm">
+    <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+        <ul class="layui-tab-title">
+            <li class="layui-this">网站配置</li>
+            <li>SEO配置</li>
+            <li>支付配置</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">后台系统名称</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="SysName" value="@Model.SysName" autocomplete="off" class="layui-input" maxlength="10">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">Title</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="SEOTitle" value="@Model.SEOTitle" autocomplete="off" class="layui-input" maxlength="50">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">Keywords</label>
+                        <div class="layui-input-inline">
+                            <textarea name="Keywords" style="width:200%" autocomplete="off" class="layui-textarea" maxlength="200">@Model.Keywords</textarea>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">Description</label>
+                        <div class="layui-input-inline">
+                            <textarea name="Description" style="width:200%" autocomplete="off" class="layui-textarea" maxlength="200">@Model.Description</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">微信AppID</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="AppId" value="@Model.AppId" autocomplete="off" class="layui-input" maxlength="50">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">微信AppSecret</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="AppSecret" value="@Model.AppSecret" autocomplete="off" class="layui-input" maxlength="50">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">微信异步通知地址</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="WxNotifyUrl" value="@Model.WxNotifyUrl" autocomplete="off" class="layui-input" maxlength="200">
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">商户号</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="MchId" value="@Model.MchId" autocomplete="off" class="layui-input" maxlength="50">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">支付密钥</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="PayKey" value="@Model.PayKey" autocomplete="off" class="layui-input" maxlength="50">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="margin-left:200px;">
+        @Html.Raw(ViewBag.ButtonHtml)
+    </div>
+</form>
+@section Scripts{
+    <script type="text/javascript">
+        $(function () {
+            layui.use('element', function () {
+                var element = layui.element; //Tab的切换功能，切换事件监听等，需要依赖element模块
+            });
+            layui.use('form', function () {
+                var form = layui.form;
+                //监听提交
+                $('button[lay-event="formSubmit"]').on('click', function () {
+                    win.showLoading("正在保存...");
+                    $("#myForm").ajaxSubmit(function (res) {
+                        win.hideLoading();
+                        if (res.code == 0) {
+                            win.success("保存成功");
+                        } else {
+                            win.alert(res.message);
+                        }
+                    });
+                    return false;
+                });
+            });
+        });
+    </script>
+}
+
+
+
+

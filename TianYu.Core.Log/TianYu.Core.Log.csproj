@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="ExceptionLessLog.cs" />
+    <Compile Remove="ExceptionLessLog\ExceptionLessLog.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="NLog\nlog.config" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="NLog\nlog.config">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="log4net" Version="2.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.9" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="1.6.5" />
+    <PackageReference Include="Microsoft.NETCore.Targets" Version="3.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TianYu.Core.Common\TianYu.Core.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ExceptionLessLog\" />
+  </ItemGroup>
+
+</Project>

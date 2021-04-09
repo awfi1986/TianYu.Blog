@@ -1,0 +1,101 @@
+﻿@{ 
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>登录</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+
+    <link rel="stylesheet" type="text/css" href="/adminres/Logo/css/style.css">
+
+    <script src="/adminres/Scripts/jquery-3.3.1.min.js"></script>
+    <script src="/adminres/layer/layer.js"></script>
+    <script src="/adminres/layer/layer.tools.js"></script>
+    <script src="/adminres/layui/layui.js"></script>
+    <script src="/adminres/Scripts/jquery.form.min.js"></script>
+
+    <style type="text/css">
+        body { background: url(/adminres/Logo/images/bg2.jpg) no-repeat; width: 100%; height: 100%; overflow: hidden; background-size: 100%; }
+    </style>
+</head>
+<body>
+    <form class="layui-form" method="post" action="/admin/login/login" id="myForm">
+        <div class="loginbox">
+            <h3>管理后台</h3>
+            <div class="logincot">
+                <div class="formbox">
+                    <div class="tab">
+                        <div class="item">
+                            <i class="account">密码登录</i>
+                            <img src="/adminres/Logo/images/ico-computer.png">
+                        </div>
+                    </div>
+                    <div class="cl"></div>
+                    <div class="itemcon">
+                        <div class="accountbox item" style="display:block;">
+                            <ul>
+                                <li>
+                                    <div class="inputtext">
+                                        <i class="ico"><img src="/adminres/Logo/images/ico-user.jpg"></i>
+                                        <input type="text" name="UserName" lay-verify="required" placeholder="用户名" autocomplete="off">
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="inputtext">
+                                        <i class="ico"><img src="/adminres/Logo/images/ico-pwd.jpg"></i>
+                                        <input type="password" name="UserPwd" lay-verify="required" placeholder="密码" autocomplete="off">
+                                    </div>
+                                </li>
+                                <li class="code">
+                                    <div class="inputtext">
+                                        <i class="ico"><img src="/adminres/Logo/images/ico-code.jpg"></i>
+                                        <input type="text" name="captcha" lay-verify="required" placeholder="图形验证码" autocomplete="off" maxlength="4">
+                                    </div>
+                                    <img class="qrcode" src="/admin/VerifyImage/index?n=@(new Random().NextDouble())" onclick="$(this).attr('src', '/admin/verifyimage/index?n='+Math.random())" id="vercode">
+                                </li>
+                            </ul>
+                            <div class="cl"></div>
+                            <div class="btn"><a id="btn_login" class="layui-btn layui-btn-fluid" lay-submit lay-filter="btnLogin">登 录</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <script>
+        if (self.frameElement && self.frameElement.tagName == "IFRAME") { window.parent.location.href = '/Admin/Login/Index'; }
+
+        $(function () {
+            $("input[name='UserName']").focus();
+            layui.use("form", function () {
+                var $ = layui.$, form = layui.form;
+                //提交
+                form.on('submit(btnLogin)', function (obj) {
+                    win.showLoading("正在登录...");
+                    $("#myForm").ajaxSubmit(function (res) {
+                        win.hideLoading();
+                        if (res.code == 0) {
+                            location.href = '/admin/home/index';
+                        } else {
+                            $("#vercode").attr("src", '/admin/verifyimage/index?n=' + Math.random());
+                            win.error(res.message);
+                        }
+                    });
+                    return false;
+                });
+            });
+
+            document.onkeydown = function (event) {
+                var e = event || window.event || arguments.callee.caller.arguments[0];
+                if (e && e.keyCode == 13) {
+                    $('#btn_login').trigger('click');
+                }
+            };
+        });
+    </script>
+</body>
+</html>

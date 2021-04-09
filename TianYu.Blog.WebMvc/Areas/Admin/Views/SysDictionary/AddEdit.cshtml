@@ -1,0 +1,60 @@
+﻿@model TianYu.Blog.Domain.DomainModel.SysDictionary
+@{
+    ViewBag.Title = "新增/编辑";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout_Edit.cshtml";
+}
+<form class="layui-form" method="post" action="/admin/sysdictionary/save" id="myForm">
+    <input type="hidden" value="@Model.Id" name="Id" />
+    <input type="hidden" value="@Model.ParentId" name="ParentId" />
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>名称</label>
+        <div class="layui-input-block">
+            <input type="text" name="DictionaryName" required lay-verify="required" autocomplete="off" class="layui-input" maxlength="20" value="@Model.DictionaryName">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>编码</label>
+        <div class="layui-input-block">
+            <input type="text" name="DictionaryCode" required lay-verify="required" autocomplete="off" class="layui-input" maxlength="16" value="@Model.DictionaryCode">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>排序</label>
+        <div class="layui-input-block">
+            <input type="text" name="Sort" required lay-verify="required|number" autocomplete="off" class="layui-input" maxlength="6" value="@Model.Sort">
+        </div>
+    </div>
+    <div class="layui-footer">
+        <button type="button" class="layui-btn layui-btn-primary" onclick="win.close()">关闭</button>
+        <button type="button" class="layui-btn" lay-submit lay-filter="formSubmit">保存</button>
+    </div>
+</form>
+@section Scripts{
+    <script type="text/javascript">
+        $(function () {
+            layui.use('form', function () {
+                var form = layui.form;
+                //监听提交
+                form.on('submit(formSubmit)', function (data) {
+                    win.showLoading("正在保存...");
+                    $("#myForm").ajaxSubmit(function (res) {
+                        win.hideLoading();
+                        if (res.code == 0) {
+                            var parentId = $('input[name=ParentId]').val();
+                            if (parentId == -1) {
+                                parent.getList();
+                            } else {
+                                parent.getList2();
+                            } 
+                            parent.win.success("保存成功");
+                            win.close();
+                        } else {
+                            win.alert(res.message);
+                        }
+                    });
+                    return false;
+                });
+            });
+        });
+    </script>
+}

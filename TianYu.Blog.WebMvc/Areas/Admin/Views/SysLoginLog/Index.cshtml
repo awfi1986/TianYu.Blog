@@ -1,0 +1,64 @@
+
+<fieldset class="layui-elem-field layui-form">
+    <legend>搜索</legend>
+    <div class="layui-field-box">
+        <div class="layui-inline">
+            <input class="layui-input" name="KeyWords" autocomplete="off" placeholder="操作人/IP" layui-type="search">
+        </div>
+        <button class="layui-btn" data-type="search" id="btnSearch">搜索</button>
+    </div>
+</fieldset>
+<style>
+    .layui-table-tool { display: none }
+</style>
+<table class="layui-hide" lay-filter="tblList" id="tblList"></table>
+@section Scripts{
+    <script type="text/javascript">
+        var pageIndex = 1;
+        layui.use('table', function () {
+            var $ = layui.$, table = layui.table;
+            var tblList = table.render({
+                elem: '#tblList'
+                , url: '/Admin/SysLoginLog/GetList' + getSearchKeys()
+                , toolbar: '#toolbarList'
+                , defaultToolbar: []//['filter', 'print', 'exports']
+                , cellMinWidth: 100
+                , page: {
+                    layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                    , curr: 1                                                   //当前页码
+                    , groups: 9                                                //显示页码数
+                    , first: false                                              //不显示首页
+                    , last: false                                               //不显示尾页
+                }
+                , cols: [[ 
+                    { field: 'actionType', title: '类型', align: 'center', templet: function (d) { return d.actionType == 1 ? '登录' : '退出'; } },
+                    { field: 'operator', title: '登录账号' },
+                    { field: 'execIp', title: '登录IP' },
+                    { field: 'execTime', title: '登录时间', align: 'center', templet: function (d) { return $.admin.getFmtDate(d.execTime, 'yyyy-MM-dd HH:mm:ss'); } },
+                    { field: 'execResult', title: '执行结果' }
+                ]]
+            });
+            var active = {
+                search: function () {
+                    //执行搜索并重载用户
+                    tblList.reload({
+                        url: "/Admin/SysLoginLog/GetList" + getSearchKeys(),
+                        page: {
+                            layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                            , curr: 1                                                   //当前页码
+                            , groups: 9                                                 //显示页码数
+                            , first: false                                              //不显示首页
+                            , last: false                                               //不显示尾页
+                        }
+                    });
+                }
+            };
+            //搜索按钮
+            $('#btnSearch').on('click', function () {
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+        });
+    </script>
+}
+

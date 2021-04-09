@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>草堂笔记后台管理系统</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link href="/adminres/layui/css/layui.css" rel="stylesheet" />
+    <link href="/adminres/layui/css/admin.css" rel="stylesheet" /> 
+    <!--树形下拉列表JS文件-->
+    <link href="/adminres/Scripts/zTree/css/zTreeStyle/zTreeStyle.css" rel="stylesheet" />
+    <link href="/adminres/Scripts/zTree/css/demo.css" rel="stylesheet" />  
+    <!--ajax表单提交JS文件--> 
+    <link href="/adminres/layui/css/formlayui.css?v=1.0" rel="stylesheet" /> 
+    <style>
+        html, body { background: #fff; }
+    </style>
+    @RenderSection("Styles", false)
+</head>
+<body>
+    <script type="text/javascript">
+        //获取查询条件
+        function getSearchKeys() {
+            var searchKeys = "";
+            $(".layui-elem-field input[layui-type='search']").each(function (i, item) {
+                searchKeys += $(item).attr("name") + "=" + $(item).val() + "&";
+            });
+            $(".layui-elem-field select[layui-type='search']").each(function (i, item) {
+                searchKeys += $(item).attr("name") + "=" + $(item).val() + "&";
+            });
+            if (searchKeys != "") searchKeys = "?" + searchKeys.substring(0, searchKeys.length - 1);
+            return searchKeys;
+        }
+        function getList() {
+            $('#btnSearch').click();
+        }
+    </script>
+    <div class="layui-fluid">
+        @RenderBody()
+    </div>
+    <script charset="utf-8" src="/adminres/Scripts/jquery-3.3.1.min.js"></script>
+    <script charset="utf-8" src="/adminres/Scripts/jquery-migrate-1.2.1.js"></script>
+    <script charset="utf-8" src="/adminres/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script charset="utf-8" src="/adminres/layui/layui.js"></script>
+    <!--弹出层JS文件-->
+    <script charset="utf-8" src="/adminres/layer/layer.js"></script>
+    <script charset="utf-8" src="/adminres/layer/layer.tools.js"></script>
+    <!--树形下拉列表JS文件--> 
+    <script charset="utf-8" src="/adminres/Scripts/zTree/js/jquery.ztree.core-3.1.js"></script>
+    <script charset="utf-8" src="/adminres/Scripts/zTree/js/jquery.ztree.excheck-3.1.js"></script>
+    <script charset="utf-8" src="/adminres/Scripts/zTree/js/jquery.ztree.all-3.1.js"></script>
+    <!--剪切粘贴JS文件-->
+    <script charset="utf-8" src="/adminres/Scripts/clipboard/clipboard.min.js"></script>
+    <script charset="utf-8" src="/adminres/Scripts/public.js?v=1.6"></script>
+    <!--ajax表单提交JS文件-->
+    <script charset="utf-8" src="/adminres/Scripts/jquery.form.min.js"></script> 
+    <script charset="utf-8" src="/adminres/Scripts/public.js?v=1.5"></script>
+    @RenderSection("Scripts", false)
+</body>
+</html>

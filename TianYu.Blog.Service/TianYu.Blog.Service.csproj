@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TianYu.Blog.Domain\TianYu.Blog.Domain.csproj" />
+    <ProjectReference Include="..\TianYu.Core.DataBase\TianYu.Core.DataBase.csproj" />
+    <PackageReference Include="Microsoft.NETCore.Targets" Version="3.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

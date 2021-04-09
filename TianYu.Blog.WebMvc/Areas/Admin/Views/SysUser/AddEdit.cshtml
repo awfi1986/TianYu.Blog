@@ -1,0 +1,95 @@
+﻿@model TianYu.Blog.Domain.DomainModel.SysUser
+@{
+    ViewBag.Title = "新增/编辑";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout_Edit.cshtml";
+}
+<form class="layui-form" method="post" action="/admin/sysuser/save" id="myForm" autocomplete="off">
+    <input type="hidden" value="@Model.Guid" name="Guid" />
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>账号</label>
+        <div class="layui-input-block">
+            @if (!string.IsNullOrWhiteSpace(Model.Guid))
+            {
+                <div style="line-height:2.8;">@Model.UserName</div>
+            }
+            else
+            {
+                <input type="text" name="UserName" required lay-verify="required" autocomplete="off" class="layui-input" maxlength="16" value="@Model.UserName">
+            }
+        </div>
+    </div>
+    @if (string.IsNullOrWhiteSpace(Model.Guid))
+    {
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span style="color:red;">*</span>密码</label>
+            <div class="layui-input-block">
+                <input type="password" name="UserPwd" required lay-verify="required" autocomplete="off" class="layui-input" maxlength="16" value="@Model.UserPwd">
+            </div>
+        </div>
+    }
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>姓名</label>
+        <div class="layui-input-block">
+            <input type="text" name="TrueName" required lay-verify="required" autocomplete="off" class="layui-input" maxlength="128" value="@Model.TrueName">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>角色</label>
+        <div class="layui-input-block">
+            <select id="RoleId" required lay-verify="required">
+                @if (ViewBag.RoleList != null)
+                {
+                    foreach (var m in ViewBag.RoleList)
+                    {
+                        <option value="@m.Id">@m.RoleName</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">状态</label>
+        <div class="layui-input-block">
+            <input type="checkbox" lay-filter="Enabled" lay-skin="switch" lay-text="启用|禁用" value="@((int)Model.Enabled)" @(Model.Enabled == 0 ? "checked" : "")>
+        </div>
+    </div>
+    <div class="layui-footer">
+        <button type="button" class="layui-btn layui-btn-primary" onclick="win.close()">关闭</button>
+        <button type="button" class="layui-btn" lay-submit lay-filter="formSubmit">保存</button>
+    </div>
+    <input type="hidden" name="UserRoleList" value="" />
+    <input type="hidden" name="Enabled" value="@((int)Model.Enabled)" />
+</form>
+@section Scripts{
+    <script type="text/javascript">
+        $(function () {
+            layui.use('form', function () {
+                var form = layui.form;
+                form.verify($.verify);
+                //监听提交
+                form.on('submit(formSubmit)', function (data) {
+                    win.showLoading("正在保存...");
+
+                    var roleList = [];
+                    roleList.push(parseInt($('#RoleId').val()));
+                    $('input[name=UserRoleList]').val(JSON.stringify(roleList));
+
+                    $("#myForm").ajaxSubmit(function (res) {
+                        win.hideLoading();
+                        if (res.code == 0) {
+                            parent.getList();
+                            parent.win.success("保存成功");
+                            win.close();
+                        } else {
+                            win.alert(res.message);
+                        }
+                    });
+                    return false;
+                });
+                form.on('switch(Enabled)', function (data) {
+                    $('input[name=Enabled]').val(data.elem.checked ? 0 : 1);
+                });
+            });
+        });
+    </script> 
+}

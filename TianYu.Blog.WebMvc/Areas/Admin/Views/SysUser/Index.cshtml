@@ -1,0 +1,177 @@
+﻿<fieldset class="layui-elem-field layui-form">
+    <legend>搜索</legend>
+    <div class="layui-field-box">
+        <div class="layui-inline">
+            <input class="layui-input" name="KeyWords" autocomplete="off" placeholder="账号/姓名" layui-type="search">
+        </div>
+        <div class="layui-inline">
+            <select name="RoleId" layui-type="search">
+                <option value="">全部角色</option>
+                @if (ViewBag.RoleList != null)
+                {
+                    foreach (var item in ViewBag.RoleList)
+                    {
+                        <option value="@item.Id">@item.RoleName</option>
+                    }
+                }
+            </select>
+        </div>
+        <button class="layui-btn" data-type="search" id="btnSearch">搜索</button>
+    </div>
+</fieldset>
+<script type="text/html" id="toolbarList">
+    <div class="layui-btn-container">
+        @Html.Raw(ViewBag.ButtonHtml)
+    </div>
+</script>
+<script type="text/html" id="Enabled">
+    <input type="checkbox" name="enabled" value="{{d.enabled}}" disabled lay-skin="switch" lay-text="启用|禁用" {{ d.enabled == 0 ? 'checked' : '' }}>
+</script>
+<table class="layui-hide" lay-filter="tblList" id="tblList"></table>
+@section Scripts{
+    <script type="text/javascript">
+        var pageIndex = 1;
+        layui.use('table', function () {
+            var $ = layui.$, table = layui.table;
+            var tblList = table.render({
+                elem: '#tblList'
+                , url: '/admin/sysuser/getlist' + getSearchKeys()
+                , toolbar: '#toolbarList'
+                , defaultToolbar: ['filter', 'print']//['filter', 'print', 'exports']
+                , cellMinWidth: 150
+                , page: {
+                    layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                    , curr: 1                                                   //当前页码
+                    , groups: 9                                                //显示页码数
+                    , first: false                                              //不显示首页
+                    , last: false                                               //不显示尾页
+                }
+                , cols: [[
+                    { type: 'checkbox' },
+                    { field: 'userName', title: '账号' },
+                    { field: 'trueName', title: '姓名' },
+                    { field: 'roleName', title: '角色名称' },
+                    { field: 'enabled', title: '状态', templet: '#Enabled', unresize: true },
+                    { field: 'createTime', title: '创建时间', width: 150, templet: function (d) { return $.admin.getFmtDate(d.createTime, 'yyyy-MM-dd HH:mm:ss'); } },
+                    { field: 'modifyTime', title: '修改时间', width: 150, templet: function (d) { return $.admin.getFmtDate(d.modifyTime, 'yyyy-MM-dd HH:mm:ss'); } }
+                ]]
+            });
+            //监听点击行事件
+            table.on('row(tblList)', function (obj) {
+                var data = obj.data;
+                //标注选中样式
+                //obj.tr.addClass('layui-table-click').siblings().removeClass('layui-table-click');
+                //$("input[name='layTableCheckbox']").prop("checked", false);
+                //$(".layui-table-body .layui-form-checkbox").removeClass("layui-form-checked");
+                //obj.tr.find("input[name='layTableCheckbox']").prop("checked", true).siblings(".layui-form-checkbox").addClass("layui-form-checked");
+            });
+            //头工具栏事件
+            table.on('toolbar(tblList)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+                var data = checkStatus.data;
+                switch (obj.event) {
+                    case 'add':
+                        win.open("/admin/sysuser/addedit", 550, 450, "新增");
+                        break;
+                    case 'edit':
+                        if (data != "") {
+                            win.open("/admin/sysuser/addedit/" + data[0].guid, 550, 450, "编辑");
+                        } else {
+                            win.info("请选择要编辑的用户");
+                        }
+                        break;
+                    case 'del':
+                        if (data != "") {
+                            var guids = [];
+                            $(data).each(function (i, item) {
+                                guids.push(item.guid);
+                            });
+                            win.confirm("确认要删除吗？", function () {
+                                $.post("/admin/sysuser/remove", { guids: guids }, function (res) {
+                                    if (res.code == 0) {
+                                        win.success("删除成功");
+                                        getList();
+                                    } else {
+                                        win.alert(res.Message);
+                                    }
+                                });
+                            });
+                        } else {
+                            win.info("请选择要删除的用户");
+                        }
+                        break;
+                    case "restPwd":
+                        if (data != "") {
+                            var guids = [];
+                            $(data).each(function (i, item) {
+                                guids.push(item.guid);
+                            });
+                            win.confirm("确认要重置密码吗？", function () {
+                                $.post("/admin/sysuser/resetpassword", { guids: guids }, function (res) {
+                                    if (res.code == 0) {
+                                        win.success("重置成功");
+                                    } else {
+                                        win.alert(res.Message);
+                                    }
+                                });
+                            });
+                        } else {
+                            win.info("请选择要重置密码的用户");
+                        }
+                        break;
+                };
+            });
+            var active = {
+                search: function () {
+                    //执行搜索并重载用户
+                    tblList.reload({
+                        url: "/admin/sysuser/getlist" + getSearchKeys(),
+                        page: {
+                            layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                            , curr: 1                                                   //当前页码
+                            , groups: 9                                                 //显示页码数
+                            , first: false                                              //不显示首页
+                            , last: false                                               //不显示尾页
+                        }
+                    });
+                }
+            };
+            //搜索按钮
+            $('#btnSearch').on('click', function () {
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+        });
+        //单击行勾选checkbox事件
+        $(document).on("click", ".layui-table-body table.layui-table tbody tr", function () {
+            var index = $(this).attr('data-index');
+            var tableBox = $(this).parents('.layui-table-box');
+            //存在固定列
+            if (tableBox.find(".layui-table-fixed.layui-table-fixed-l").length > 0) {
+                tableDiv = tableBox.find(".layui-table-fixed.layui-table-fixed-l");
+            } else {
+                tableDiv = tableBox.find(".layui-table-body.layui-table-main");
+            }
+            //获取已选中列并取消选中
+            var trs = tableDiv.find(".layui-unselect.layui-form-checkbox.layui-form-checked").parent().parent().parent();
+            for (var i = 0; i < trs.length; i++) {
+                var ind = $(trs[i]).attr("data-index");
+                if (ind != index) {
+                    var checkCell = tableDiv.find("tr[data-index=" + ind + "]").find("td div.laytable-cell-checkbox div.layui-form-checkbox I");
+                    if (checkCell.length > 0) {
+                        checkCell.click();
+                    }
+                }
+            }
+            //选中单击行
+            var checkCell = tableDiv.find("tr[data-index=" + index + "]").find("td div.laytable-cell-checkbox div.layui-form-checkbox I");
+            //if (checkCell.length > 0 & trs.length === 1) {
+            //    checkCell.click();
+            //}
+            checkCell.click();
+        });
+        $(document).on("click", "td div.laytable-cell-checkbox div.layui-form-checkbox", function (e) {
+            e.stopPropagation();
+        });
+    </script>
+}

@@ -1,0 +1,274 @@
+﻿<#@ assembly name="System.Core.dll" #>
+<#@ assembly name="System.Data.dll" #>
+<#@ assembly name="System.Data.DataSetExtensions.dll" #>
+<#@ assembly name="System.Xml.dll" #> 
+<#@ assembly name="$(ProjectDir)/DLL/MySql.Data.dll" #>
+
+<#@ import namespace="System" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="MySql.Data.MySqlClient" #>  
+<#@ import namespace="System.Text.RegularExpressions" #>
+<#+
+	class DbHelper
+	{
+        private static readonly string connectionString = "Server=118.89.169.249;Port=3306;Stmt=;Database=tianyu;Uid=tianyu;Pwd=3Y8yRMTZrbaY7wRS;";
+        private static readonly string dbDatabase = "tianyu";
+        private static readonly string tableName = "sys_login_log";
+	 
+		public static List<DbTable> GetDbTables()
+        {  
+            string sql =  "show table status ";
+            if(!string.IsNullOrEmpty(tableName)){
+              sql +=" where `Name` in ('" + tableName + "')";
+            }
+            DataTable dt = GetDataTable(sql,null); 
+            return dt.Rows.Cast<DataRow>().Select(row => new DbTable()
+            {  
+                TableSourceName = row.Field<string>("Name"),
+                TableDesc = row.Field<string>("Comment") 
+            }).ToList();
+        }
+          
+
+        public static List<DbColumn> GetDbColumns(string tableName)
+        { 
+            string sql = string.Format(@"SELECT `information_schema`.`COLUMNS`.`ORDINAL_POSITION`
+                                                ,`information_schema`.`COLUMNS`.`COLUMN_KEY`
+                                                ,`information_schema`.`COLUMNS`.`EXTRA`
+                                                ,`information_schema`.`COLUMNS`.`COLUMN_NAME`
+                                                ,`information_schema`.`COLUMNS`.`DATA_TYPE`
+                                                ,`information_schema`.`COLUMNS`.`COLUMN_COMMENT` 
+                                                ,`information_schema`.`COLUMNS`.`IS_NULLABLE`
+                                            FROM `information_schema`.`COLUMNS`
+                                            WHERE `information_schema`.`COLUMNS`.`TABLE_SCHEMA` = @database
+											AND `information_schema`.`COLUMNS`.`TABLE_NAME` = @tableName");
+
+            MySqlParameter[] parameter = {
+               new MySqlParameter("@database",dbDatabase),
+               new MySqlParameter("@tableName",tableName) 
+            };
+             
+            DataTable dt = GetDataTable(sql,parameter);
+
+            return dt.Rows.Cast<DataRow>().Select(row => new DbColumn()
+            { 
+                
+                IsPrimaryKey = row.Field<string>("COLUMN_KEY")=="PRI", 
+                IsIdentity = row.Field<string>("EXTRA")=="auto_increment", 
+                IsNullable = row.Field<string>("IS_NULLABLE")=="YES", 
+                ColumnSourceName = row.Field<string>("COLUMN_NAME"),
+                ColumnType = row.Field<string>("DATA_TYPE"),  
+                Remark = row.Field<string>("COLUMN_COMMENT")
+            }).ToList();
+        }
+         
+
+        private static DataTable GetDataTable(string commandText, params MySqlParameter[] parms)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                MySqlCommand mySqlCmd = new MySqlCommand(commandText, connection);
+                if (parms != null)
+                {
+                    mySqlCmd.Parameters.AddRange(parms);
+                }
+                MySqlDataAdapter adp = new MySqlDataAdapter(mySqlCmd);
+
+                DataTable dt = new DataTable();
+                adp.Fill(dt);
+
+                return dt;
+            }
+        } 
+    }
+    
+    public sealed class DbTable
+    { 
+        public string TableName  
+        {
+            get
+            {
+                return UpperFirst(TableSourceName);;
+            }
+        } 
+        public string LowerTableName  
+        {
+            get
+            {
+                return LowerFirst(TableName);;
+            }
+        } 
+        public string TableSourceName { get; set; }
+        public string TableDesc { get; set; }  
+        public bool HasPrimaryKey { get; set; }
+    } 
+    
+    public sealed class DbColumn
+    {
+        
+        public int ColumnID { get; set; } 
+        public bool IsPrimaryKey { get; set; }
+        public bool IsIdentity { get; set; } 
+        public bool IsNullable { get; set; } 
+        public string ColumnName 
+        {
+            get
+            {
+                return UpperFirst(ColumnSourceName);;
+            }
+        } 
+        public string LowerColumnName  
+        {
+            get
+            {
+                return LowerFirst(ColumnName);;
+            }
+        } 
+        public string ColumnSourceName { get; set; } 
+        public string ColumnType { get; set; } 
+        public string CSharpType
+        {
+            get
+            {
+                return SqlServerDbTypeMap.MapCsharpType(ColumnType);
+            }
+        } 
+        public Type CommonType
+        {
+            get
+            {
+                return SqlServerDbTypeMap.MapCommonType(ColumnType);
+            }
+        }   
+        public string Remark { get; set; }
+    } 
+
+
+    public static string LowerFirst(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return s;
+
+        var temp = s.Split('_');
+
+        string resStr ="";
+
+        for (int i = 0; i < temp.Length; i++)
+        {
+            resStr += Regex.Replace(temp[i], @"\b[A-Z]\w+", delegate (Match match)
+            {
+                string v = match.ToString();
+                return char.ToLower(v[0]) + v.Substring(1);
+            });
+        }
+        return resStr;
+    }
+    public static string UpperFirst(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return s;
+
+        var temp = s.Split('_');
+
+        string resStr ="";
+
+        for (int i = 0; i < temp.Length; i++)
+        {
+            resStr += Regex.Replace(temp[i], @"\b[a-z]\w+", delegate (Match match)
+            {
+                string v = match.ToString();
+                return char.ToUpper(v[0]) + v.Substring(1);
+            });
+        }
+        return resStr;
+    }
+    public class SqlServerDbTypeMap
+    {
+        public static string MapCsharpType(string dbtype)
+        {
+            if (string.IsNullOrEmpty(dbtype)) return dbtype;
+            dbtype = dbtype.ToLower();
+            string csharpType = "object";
+            switch (dbtype)
+            {
+                case "bigint": csharpType = "long"; break;
+                case "binary": csharpType = "byte[]"; break;
+                case "bit": csharpType = "bool"; break;
+                case "char": csharpType = "string"; break;
+                case "date": csharpType = "DateTime"; break;
+                case "datetime": csharpType = "DateTime"; break;
+                case "datetime2": csharpType = "DateTime"; break;
+                case "datetimeoffset": csharpType = "DateTimeOffset"; break;
+                case "decimal": csharpType = "decimal"; break;
+                case "float": csharpType = "double"; break;
+                case "image": csharpType = "byte[]"; break;
+                case "int": csharpType = "int"; break;
+                case "money": csharpType = "decimal"; break;
+                case "nchar": csharpType = "string"; break;
+                case "ntext": csharpType = "string"; break;
+                case "numeric": csharpType = "decimal"; break;
+                case "nvarchar": csharpType = "string"; break;
+                case "real": csharpType = "Single"; break;
+                case "smalldatetime": csharpType = "DateTime"; break;
+                case "smallint": csharpType = "short"; break;
+                case "smallmoney": csharpType = "decimal"; break;
+                case "sql_variant": csharpType = "object"; break;
+                case "sysname": csharpType = "object"; break;
+                case "text": csharpType = "string"; break;
+                case "time": csharpType = "TimeSpan"; break;
+                case "timestamp": csharpType = "byte[]"; break;
+                case "tinyint": csharpType = "byte"; break;
+                case "uniqueidentifier": csharpType = "Guid"; break;
+                case "varbinary": csharpType = "byte[]"; break;
+                case "varchar": csharpType = "string"; break;
+                case "xml": csharpType = "string"; break;
+                default: csharpType = "object"; break;
+            }
+            return csharpType;
+        }
+
+        public static Type MapCommonType(string dbtype)
+        {
+            if (string.IsNullOrEmpty(dbtype)) return Type.Missing.GetType();
+            dbtype = dbtype.ToLower();
+            Type commonType = typeof(object);
+            switch (dbtype)
+            {
+                case "bigint": commonType = typeof(long); break;
+                case "binary": commonType = typeof(byte[]); break;
+                case "bit": commonType = typeof(bool); break;
+                case "char": commonType = typeof(string); break;
+                case "date": commonType = typeof(DateTime); break;
+                case "datetime": commonType = typeof(DateTime); break;
+                case "datetime2": commonType = typeof(DateTime); break;
+                case "datetimeoffset": commonType = typeof(DateTimeOffset); break;
+                case "decimal": commonType = typeof(decimal); break;
+                case "float": commonType = typeof(double); break;
+                case "image": commonType = typeof(byte[]); break;
+                case "int": commonType = typeof(int); break;
+                case "money": commonType = typeof(decimal); break;
+                case "nchar": commonType = typeof(string); break;
+                case "ntext": commonType = typeof(string); break;
+                case "numeric": commonType = typeof(decimal); break;
+                case "nvarchar": commonType = typeof(string); break;
+                case "real": commonType = typeof(Single); break;
+                case "smalldatetime": commonType = typeof(DateTime); break;
+                case "smallint": commonType = typeof(short); break;
+                case "smallmoney": commonType = typeof(decimal); break;
+                case "sql_variant": commonType = typeof(object); break;
+                case "sysname": commonType = typeof(object); break;
+                case "text": commonType = typeof(string); break;
+                case "time": commonType = typeof(TimeSpan); break;
+                case "timestamp": commonType = typeof(byte[]); break;
+                case "tinyint": commonType = typeof(byte); break;
+                case "uniqueidentifier": commonType = typeof(Guid); break;
+                case "varbinary": commonType = typeof(byte[]); break;
+                case "varchar": commonType = typeof(string); break;
+                case "xml": commonType = typeof(string); break;
+                default: commonType = typeof(object); break;
+            }
+            return commonType;
+        }
+    } 
+ #>

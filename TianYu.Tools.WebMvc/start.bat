@@ -1,0 +1,1 @@
+dotnet watch --project TianYu.Tools.WebMvc.csproj run

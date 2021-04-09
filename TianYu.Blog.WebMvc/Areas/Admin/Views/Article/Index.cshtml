@@ -1,0 +1,131 @@
+﻿<fieldset class="layui-elem-field layui-form">
+    <legend>搜索</legend>
+    <div class="layui-field-box">
+        <div class="layui-inline">
+            <input class="layui-input" name="KeyWords" autocomplete="off" placeholder="文章名称" layui-type="search">
+        </div>
+        <div class="layui-inline">
+            <select name="CategoryId" layui-type="search">
+                <option value="">全部分类</option>
+                @Html.Raw(ViewBag.CategoryList)
+            </select>
+        </div>
+        <div class="layui-inline">
+            <select name="PulishStatus" layui-type="search">
+                <option value="">全部发布状态</option>
+                <option value="0">未发布</option>
+                <option value="1">已发布</option>
+            </select>
+        </div>
+        <button class="layui-btn" data-type="search" id="btnSearch">搜索</button>
+    </div>
+</fieldset>
+<script type="text/html" id="toolbarList">
+    <div class="layui-btn-container">
+        @Html.Raw(ViewBag.ButtonHtml)
+    </div>
+</script>
+<script type="text/html" id="pulishStatus">
+    <input type="checkbox" name="pulishStatus" value="{{d.pulishStatus}}" disabled lay-skin="switch" lay-text="已发布|未发布" {{ d.pulishStatus == 1 ? 'checked' : '' }}>
+</script>
+<script type="text/html" id="isRecommend">
+    <input type="checkbox" name="isRecommend" value="{{d.isRecommend}}" disabled lay-skin="switch" lay-text="是|否" {{ d.isRecommend ? 'checked' : '' }}>
+</script>
+<script type="text/html" id="isTop">
+    <input type="checkbox" name="isTop" value="{{d.isTop}}" disabled lay-skin="switch" lay-text="是|否" {{ d.isTop ? 'checked' : '' }}>
+</script>
+<table class="layui-hide" lay-filter="tblList" id="tblList"></table>
+@section Scripts{
+    <script type="text/javascript">
+        var pageIndex = 1;
+        layui.use('table', function () {
+            var $ = layui.$, table = layui.table;
+            var tblList = table.render({
+                elem: '#tblList'
+                , url: '/admin/article/getlist' + getSearchKeys()
+                , toolbar: '#toolbarList'
+                , defaultToolbar: ['filter', 'print']//['filter', 'print', 'exports']
+                , cellMinWidth: 100
+                , page: {
+                    layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                    , curr: 1                                                   //当前页码
+                    , groups: 9                                                //显示页码数
+                    , first: false                                              //不显示首页
+                    , last: false                                               //不显示尾页
+                }
+                , cols: [[
+                    { type: 'checkbox' },
+                    {
+                        field: 'articleTitle', title: '文章标题', width: 250, templet: function (d) {
+                            return '<a target="_blank" href="/Home/Preview/' + d.guid + '" title="单击预览">' + d.articleTitle + '</a>';
+                        }
+                    },
+                    { field: 'cateoryName', title: '所属分类' },
+                    { field: 'pulishStatus', title: '发布状态', templet: '#pulishStatus', unresize: true },
+                    { field: 'isRecommend', title: '是否推荐', templet: '#isRecommend', unresize: true },
+                    { field: 'isTop', title: '是否置顶', templet: '#isTop', unresize: true },
+                    { field: 'pvCount', title: '浏览量', align: 'right' },
+                    { field: 'createTime', title: '创建时间', align: 'center', templet: function (d) { return $.admin.getFmtDate(d.createTime, 'yyyy-MM-dd HH:mm:ss'); } },
+                    { field: 'modifyTime', title: '修改时间', align: 'center', templet: function (d) { return $.admin.getFmtDate(d.modifyTime, 'yyyy-MM-dd HH:mm:ss'); } }
+                ]]
+            });
+            //头工具栏事件
+            table.on('toolbar(tblList)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+                var data = checkStatus.data;
+                switch (obj.event) {
+                    case 'add':
+                        win.open("/admin/article/addedit", 900, 650, "新增");
+                        break;
+                    case 'edit':
+                        if (data != "") {
+                            win.open("/admin/article/addedit/" + data[0].guid, 900, 650, "编辑");
+                        } else {
+                            win.info("请选择要编辑的内容");
+                        }
+                        break;
+                    case 'del':
+                        if (data != "") {
+                            var guids = [];
+                            $(data).each(function (i, item) {
+                                guids.push(item.guid);
+                            });
+                            win.confirm("确认要删除吗？", function () {
+                                $.post("/admin/article/remove", { guids: guids }, function (res) {
+                                    if (res.code == 0) {
+                                        win.success("删除成功");
+                                        getList();
+                                    } else {
+                                        win.alert(res.Message);
+                                    }
+                                });
+                            });
+                        } else {
+                            win.info("请选择要删除的内容");
+                        }
+                        break;
+                };
+            });
+            var active = {
+                search: function () {
+                    //执行搜索并重载用户
+                    tblList.reload({
+                        url: "/admin/article/getlist" + getSearchKeys(),
+                        page: {
+                            layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']  //自定义分页布局
+                            , curr: 1                                                   //当前页码
+                            , groups: 9                                                 //显示页码数
+                            , first: false                                              //不显示首页
+                            , last: false                                               //不显示尾页
+                        }
+                    });
+                }
+            };
+            //搜索按钮
+            $('#btnSearch').on('click', function () {
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+        });
+    </script>
+}

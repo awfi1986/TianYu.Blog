@@ -1,0 +1,134 @@
+﻿<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ output extension="/" #> 
+  
+<#@ include file="$(ProjectDir)/MySqlDbHelper.ttinclude"  #>
+<#@ include file="$(ProjectDir)/Manager.ttinclude"	#> 
+
+
+<#  var manager = new Manager(Host, GenerationEnvironment, true);  
+	var OutputPath1 = Path.GetDirectoryName(Host.TemplateFile+"..");
+    OutputPath1=Path.Combine(OutputPath1,"Admin","Views");
+#>
+<# foreach (DbTable item in DbHelper.GetDbTables())
+   { 
+        OutputPath1=Path.Combine(OutputPath1,item.TableName);
+	    if (!Directory.Exists(OutputPath1))
+	    {
+	        Directory.CreateDirectory(OutputPath1);
+	    }
+		manager.StartBlock("AddEdit.cshtml",OutputPath1);//文件名
+#> 
+@{
+    ViewBag.Title = "新增/编辑";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout_Edit.cshtml";
+}
+<form class="layui-form" method="post" action="/Admin/<#=item.TableName#>/Save" id="myForm" autocomplete="off">
+    <input type="hidden" value="@Model.Guid" name="Guid" /> 
+    <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+        <ul class="layui-tab-title">
+            <li class="layui-this">基础信息</li>
+            <li>详情内容</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+            <# foreach(DbColumn mm in DbHelper.GetDbColumns(item.TableSourceName)){#> 
+               <div class="layui-form-item">
+                    <label class="layui-form-label"><span style="color:red;">*</span><#=mm.Remark#></label>
+                    <div class="layui-input-block">
+                        <input type="text" name="<#=mm.ColumnName#>" required lay-verify="required" autocomplete="off" class="layui-input" maxlength="128" value="@Model.<#=mm.ColumnName#>">
+                    </div>
+                </div><# } #>                    
+                <div class="layui-form-item layui-form-text">
+                    <div class="layui-input-block">
+                        <button type="button" class="layui-btn" id="btnUpload1">
+                            <i class="layui-icon">&#xe67c;</i>上传图片
+                        </button>
+                        <img id="TitleImg" src="@Model.TitleImg" style="width:80px;height:60px;margin-left:10px;@(Model.TitleImg + "" != "" ? "" : "display:none")" />
+                    </div>
+                </div> 
+                <div class="layui-form-item">
+                    <label class="layui-form-label">发布状态</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" lay-filter="PulishStatus" value="@Model.PulishStatus" lay-skin="switch" lay-text="已发布|未发布" @(Model.PulishStatus == 1 ? "checked" : "")>
+                    </div>
+                </div> 
+            </div>
+            <div class="layui-tab-item">
+                <textarea name="Content" id="Content">@Model.Content</textarea>
+            </div>
+        </div>
+    </div>
+    <div class="layui-footer">
+        <button type="button" class="layui-btn layui-btn-primary" onclick="win.close()">关闭</button>
+        <button type="button" class="layui-btn" lay-submit lay-filter="formSubmit">保存</button>
+    </div>
+</form>
+@section Scripts{
+    <script type="text/javascript">
+        $(function () {
+            var edtor = initUEditor('Content', "100%", "350");
+
+            layui.use('element', function () {
+                var $ = layui.jquery, element = layui.element;
+            });
+            layui.use('form', function () {
+                var form = layui.form;
+                form.verify($.verify);
+                //监听提交
+                form.on('submit(formSubmit)', function (data) {
+                    win.showLoading("正在保存...");
+
+                    var roleList = [];
+                    roleList.push(parseInt($('#RoleId').val()));
+                    $('input[name=UserRoleList]').val(JSON.stringify(roleList));
+
+                    $("#myForm").ajaxSubmit(function (res) {
+                        win.hideLoading();
+                        if (res.code == 0) {
+                            parent.getList();
+                            parent.win.success("保存成功");
+                            win.close();
+                        } else {
+                            win.alert(res.message);
+                        }
+                    });
+                    return false;
+                });
+                form.on('switch(PulishStatus)', function (data) {
+                    $('input[name=PulishStatus]').val(data.elem.checked ? 1 : 0);
+                }); 
+            });
+
+            layui.use('upload', function () {
+                var upload = layui.upload;
+                var uploadInst1 = upload.render({
+                    elem: '#btnUpload1'
+                    , url: '/Admin/Upload/Upload'
+                    , before: function (res) {
+                        win.showLoading("正在上传...");
+                    }
+                    , done: function (res) {
+                        if (res.code == 0) {
+                            $("#TitleImg").show().attr("src", res.data[0].saveFilePath);
+                            $("input[name='TitleImg']").val(res.data[0].saveFilePath);
+                        } else {
+                            win.alert("出错了");
+                        }
+
+                        win.hideLoading();
+                    }
+                    , error: function () {
+                        win.hideLoading();
+                        win.alert("出错了");
+                    }
+                });
+            });
+        });
+    </script>
+}
+	 
+<#
+   manager.EndBlock(); 
+   }
+  manager.Process(true);
+#>

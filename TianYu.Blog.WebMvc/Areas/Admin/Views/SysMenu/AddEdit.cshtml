@@ -1,0 +1,132 @@
+﻿@model TianYu.Blog.Domain.DomainModel.SysMenu
+@{
+    ViewBag.Title = "新增/编辑";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout_Edit.cshtml";
+}
+@section Styles{
+    <link href="/adminres/Scripts/zTree/css/zTreeStyle/zTreeStyle.css" rel="stylesheet" />
+    <link href="/adminres/Scripts/zTree/css/demo.css" rel="stylesheet" />
+}
+<form class="layui-form" method="post" action="/admin/sysmenu/save" id="myForm">
+    <input type="hidden" value="@Model.Id" name="Id" />
+    <input type="hidden" value="@Model.ParentId" name="ParentId" />
+    <input type="hidden" value="@Model.MenuIcon" name="MenuIcon" id="txtIcon" />
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>父菜单</label>
+        <div class="layui-input-block">
+            <input type="text" required lay-verify="required" readonly id="txtSysMenu" autocomplete="off" class="layui-input" value="@ViewBag.MenuName" onclick="showSysMenuMenu();">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>名称</label>
+        <div class="layui-input-block">
+            <input type="text" name="MenuName" required lay-verify="required" autocomplete="off" class="layui-input" maxlength="16" value="@Model.MenuName">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;"></span>图标</label>
+        <div class="layui-input-block">
+            <i class="layui-icon @(Model.MenuIcon)" id="iicon"></i>
+            <button type="button" class="layui-btn" onclick="onSelectIcon()">选择图标</button>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;"></span>链接</label>
+        <div class="layui-input-block">
+            <input type="text" name="MenuUrl" autocomplete="off" class="layui-input" maxlength="128" value="@Model.MenuUrl">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">状态</label>
+        <div class="layui-input-block">
+            <input type="checkbox" name="Status" lay-skin="switch" lay-text="启用|禁用" value="0" @(Model.Status == 0 ? "checked" : "")>
+        </div>
+    </div>
+    <div class="layui-form-item layui-form-text">
+        <label class="layui-form-label">排序</label>
+        <div class="layui-input-block">
+            <input type="text" name="Sort" autocomplete="off" class="layui-input" maxlength="16" value="@Model.Sort">
+        </div>
+    </div>
+    <div class="layui-footer">
+        <button type="button" class="layui-btn layui-btn-primary" onclick="win.close()">关闭</button>
+        <button type="button" class="layui-btn" lay-submit lay-filter="formSubmit">保存</button>
+    </div>
+</form>
+<div id="sysMenuMenu" class="menuContent" style="display: none; position: absolute;">
+    <ul id="treeSysMenu" class="ztree" style="margin-top: 0;"></ul>
+</div>
+<input type="hidden" id="txtMenuzTree" value="@ViewBag.TreeJson" />
+@section Scripts{
+    <script src="/adminres/Scripts/zTree/js/jquery.ztree.core-3.1.js" charset="utf-8"></script>
+    <script src="/adminres/Scripts/zTree/js/jquery.ztree.excheck-3.1.js"></script>
+    <script src="/adminres/Scripts/zTree/js/jquery.ztree.all-3.1.js"></script>
+    <script type="text/javascript">
+    $(function () {
+        layui.use('form', function () {
+            var form = layui.form;
+            //监听提交
+            form.on('submit(formSubmit)', function (data) {
+                win.showLoading("正在保存...");
+                $("#myForm").ajaxSubmit(function (res) {
+                    win.hideLoading();
+                    if (res.code == 0) {
+                        parent.getModel(res.data, "@Model.Id");
+                        parent.win.success("保存成功");
+                        win.close(); 
+                    } else {
+                        win.alert(res.message);
+                    }
+                });
+                return false;
+            });
+        });
+
+        var menuSetting = {
+            view: {
+                dblClickExpand: false
+            },
+            data: {
+                simpleData: {
+                    enable: true
+                }
+            },
+            callback: {
+                onClick: onMenuClick
+            }
+        };
+        //初始化树形菜单
+        var menuNodes = eval($("#txtMenuzTree").val());
+        menuTree = $.fn.zTree.init($("#treeSysMenu"), menuSetting, menuNodes);
+    });
+    //点击选择菜单
+    function onMenuClick(e, treeId, treeNode) {
+        $("#myForm input[name='ParentId']").val(treeNode.id);
+        $("#txtSysMenu").val(treeNode.name);
+        hideSysMenuMenu();
+    }
+    //显示菜单
+    function showSysMenuMenu() {
+        var cityObj = $("#txtSysMenu");
+        var cityOffset = $("#txtSysMenu").offset();
+        $("#treeSysMenu").width(cityObj.width());
+        $("#sysMenuMenu").css({ left: cityOffset.left + "px", top: cityOffset.top + cityObj.outerHeight() + "px" }).slideDown("fast");
+        $("body").bind("mousedown", onAddSysMenuBodyDown);
+    }
+    //隐藏菜单
+    function hideSysMenuMenu() {
+        $("#sysMenuMenu").fadeOut("fast");
+        $("body").unbind("mousedown", onAddSysMenuBodyDown);
+    }
+    //隐藏菜单
+    function onAddSysMenuBodyDown(event) {
+        if (!(event.target.id == "menuBtn" || event.target.id == "sysMenuMenu" || $(event.target).parents("#sysMenuMenu").length > 0)) {
+            hideSysMenuMenu();
+        }
+    }
+    //选择图标
+    function onSelectIcon() {
+        win.open("/admin/sysmenu/selecticon", 450, 400, "选择图标");
+    }
+    </script>
+}

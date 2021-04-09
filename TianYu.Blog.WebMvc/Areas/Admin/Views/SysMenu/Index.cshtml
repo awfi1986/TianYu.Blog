@@ -1,0 +1,242 @@
+﻿@using TianYu.Blog.Domain.DomainModel
+@model List<SysMenu>
+@{
+    List<SysButton> listButton = ViewBag.ListButton ?? new List<SysButton>();
+}
+<div class="layui-fluid">
+    <div class="layui-btn-group demoTable">
+        <button class="layui-btn" onclick="add(-1)">新增菜单</button>
+    </div>
+    <div class="layui-collapse" id="menuList">
+        @foreach (var item in Model.Where(a => a.ParentId == -1))
+        {
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title">
+                    <i class="layui-icon layui-icon-right"></i>
+                    <label onclick="onOpen(this,@item.Id)" class="plbl" id="lbl@(item.Id)">@item.MenuName</label>
+                    <div class="layui-btn-group" style="padding-left:10px;border-left:1px solid #ddd;">
+                        <button class="layui-btn layui-btn-sm" onclick="add(@item.Id)" title="新增">
+                            <i class="layui-icon">&#xe654;</i>
+                        </button>
+                        <button class="layui-btn layui-btn-sm" onclick="edit(@item.Id)" title="编辑">
+                            <i class="layui-icon">&#xe642;</i>
+                        </button>
+                        <button class="layui-btn layui-btn-sm" onclick="del(@item.Id,this)" title="删除">
+                            <i class="layui-icon">&#xe640;</i>
+                        </button>
+                    </div>
+                    <div style="display:inline-block;width:80px;">
+                        <input type="number" placeholder="排序" class="layui-input" style="height:30px;" name="sort" value="@item.Sort" onchange="updateSort('@item.Id',this)" />
+                    </div>
+                </h2>
+                <div class="layui-colla-content" id="nodeContent@(item.Id)">
+                    <div class="layui-collapse">
+                        @foreach (var nodeMenu in Model.Where(a => a.ParentId == item.Id))
+                        {
+                            <div class="layui-colla-item">
+                                <h2 class="layui-colla-title">
+                                    <i class="layui-icon layui-icon-right"></i>
+                                    <label onclick="onNodeOpen(this,@nodeMenu.Id)" id="lbl@(nodeMenu.Id)">@nodeMenu.MenuName</label>
+                                    <div class="layui-btn-group" style="padding-left:10px;border-left:1px solid #ddd;">
+                                        <button class="layui-btn layui-btn-sm" onclick="edit(@nodeMenu.Id)" title="编辑">
+                                            <i class="layui-icon">&#xe642;</i>
+                                        </button>
+                                        <button class="layui-btn layui-btn-sm" onclick="del(@nodeMenu.Id,this)" title="删除">
+                                            <i class="layui-icon">&#xe640;</i>
+                                        </button>
+                                    </div>
+                                    <div style="display:inline-block;width:80px;">
+                                        <input type="number" placeholder="排序" class="layui-input" style="height:30px;" name="sort" value="@nodeMenu.Sort" onchange="updateSort('@nodeMenu.Id',this)" />
+                                    </div>
+                                </h2>
+                                <div class="layui-colla-content" id="btnContent@(nodeMenu.Id)">
+                                    <button class="layui-btn layui-btn-sm" title="新增按钮" onclick="addBtn(@nodeMenu.Id)">
+                                        <i class="layui-icon">&#xe654;</i>
+                                    </button>
+                                    <table class="layui-table">
+                                        <colgroup>
+                                            <col width="214.5">
+                                            <col>
+                                        </colgroup>
+                                        <tbody id="tbd@(nodeMenu.Id)">
+                                            @foreach (var btn in listButton.Where(t => t.MenuId == nodeMenu.Id))
+                                            {
+                                                <tr>
+                                                    <td id="td@(btn.Id)">@btn.ButtonName</td>
+                                                    <td>
+                                                        <div class="layui-btn-group">
+                                                            <button class="layui-btn layui-btn-primary layui-btn-sm" onclick="editBtn(@btn.Id)" title="编辑">
+                                                                <i class="layui-icon">&#xe642;</i>
+                                                            </button>
+                                                            <button class="layui-btn layui-btn-primary layui-btn-sm" onclick="delBtn(@btn.Id,this)" title="删除">
+                                                                <i class="layui-icon">&#xe640;</i>
+                                                            </button>
+                                                        </div>
+                                                        <div style="display:inline-block;width:80px;">
+                                                            <input type="number" placeholder="排序" class="layui-input" style="height:30px;" name="sort" value="@btn.Sort" onchange="updateBtnSort('@btn.Id',this)" />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+@section Scripts{
+    <script type="text/javascript">
+        //新增
+        function add(pid) {
+            win.open("/admin/sysmenu/addedit?pid=" + pid, 550, 450, "新增");
+        }
+        //编辑
+        function edit(id) {
+            win.open("/admin/sysmenu/addedit?id=" + id, 550, 450, "编辑");
+        }
+        //删除
+        function del(id, obj) {
+            win.confirm("确认要删除吗？", function () {
+                $.post("/admin/sysmenu/remove", { id: id }, function (res) {
+                    if (res.code == 0) {
+                        $(obj).parent().parent().parent().remove();
+                    } else {
+                        win.alert("删除失败");
+                    }
+                });
+            });
+        }
+        //父级展开
+        function onOpen(obj, id) {
+            if ($(obj).siblings("i").hasClass("layui-icon-right")) {
+                $(obj).siblings("i").removeClass("layui-icon-right").addClass("layui-icon-down");
+                $("#nodeContent" + id).addClass("layui-show");
+            } else {
+                $(obj).siblings("i").removeClass("layui-icon-down").addClass("layui-icon-right");
+                $("#nodeContent" + id).removeClass("layui-show");
+            }
+        }
+        //子级展开
+        function onNodeOpen(obj, id) {
+            if ($(obj).siblings("i").hasClass("layui-icon-right")) {
+                $(obj).siblings("i").removeClass("layui-icon-right").addClass("layui-icon-down");
+                $("#btnContent" + id).addClass("layui-show");
+            } else {
+                $(obj).siblings("i").removeClass("layui-icon-down").addClass("layui-icon-right");
+                $("#btnContent" + id).removeClass("layui-show");
+            }
+        }
+        //修改排序
+        function updateSort(id, obj) {
+            $.post("/admin/sysmenu/updatesort", { id: id, sort: $(obj).val() }, function (res) { });
+        }
+        //获取菜单
+        function getModel(item, id) {
+            if (id > 0) {
+                $("#lbl" + id).html(item.name);
+                $("#lbl" + id).parent().find("input[name='sort']").val(item.sort);
+            } else {
+                var menuHtml = "<div class=\"layui-colla-item\">";
+                menuHtml += "<h2 class=\"layui-colla-title\">";
+                menuHtml += "<i class=\"layui-icon layui-icon-right\"></i>&nbsp;&nbsp;";
+                if (item.ParentId == 0) {
+                    menuHtml += "<label class=\"plbl\" onclick=\"onOpen(this," + item.id + ")\">" + item.name + "</label>";
+                    menuHtml += "<div class=\"layui-btn-group\" style=\"padding-left:10px;border-left:1px solid #ddd;\">";
+                    menuHtml += "<button class=\"layui-btn layui-btn-sm\" onclick=\"add(" + item.id + ")\" title=\"新增\">";
+                    menuHtml += "<i class=\"layui-icon\">&#xe654;</i>";
+                    menuHtml += "</button>";
+                } else {
+                    menuHtml += "<label onclick=\"onNodeOpen(this," + item.id + ")\">" + item.name + "</label>";
+                    menuHtml += "<div class=\"layui-btn-group\" style=\"padding-left:10px;border-left:1px solid #ddd;\">";
+                }
+                menuHtml += "<button class=\"layui-btn layui-btn-sm\" onclick=\"edit(" + item.id + ")\" title=\"编辑\">";
+                menuHtml += "<i class=\"layui-icon\">&#xe642;</i>";
+                menuHtml += "</button>";
+                menuHtml += "<button class=\"layui-btn layui-btn-sm\" onclick=\"del(" + item.id + ",this)\" title=\"删除\">";
+                menuHtml += "<i class=\"layui-icon\">&#xe640;</i>";
+                menuHtml += "</button>";
+                menuHtml += "</div>";
+                menuHtml += "<div style=\"display:inline-block;width:80px;\">";
+                menuHtml += "<input type=\"number\" placeholder=\"排序\" class=\"layui-input\" style=\"height:30px;\" value=\"" + item.sort + "\" onchange=\"updateSort(" + item.id + ",this)\" />";
+                menuHtml += "</div>";
+                menuHtml += "</h2>";
+                menuHtml += "<div class=\"layui-colla-content\" id=\"" + (item.parentId > 0 ? "btn" : "node") + "Content" + item.id + "\">";
+                if (item.ParentId > 0) {
+                    menuHtml += "<button class=\"layui-btn layui-btn-sm\" title=\"新增按钮\" onclick=\"addBtn(" + item.id + ")\">";
+                    menuHtml += "<i class=\"layui-icon\">&#xe654;</i>";
+                    menuHtml += "</button>";
+                    menuHtml += "<table class=\"layui-table\">";
+                    menuHtml += "<colgroup><col width=\"214.5\"><col></colgroup>";
+                    menuHtml += "<tbody id=\"tbd" + item.id + "\">";
+                    menuHtml += "</tbody>";
+                    menuHtml += "</table>";
+                } else {
+                    menuHtml += "<div class=\"layui-collapse\">";
+                    menuHtml += "</div>";
+                }
+                menuHtml += "</div>";
+                menuHtml += "</div>";
+                if (item.ParentId > 0) {
+                    $("#nodeContent" + item.parentId + " .layui-collapse").append(menuHtml);
+                } else {
+                    window.location.reload();
+                }
+            }
+        }
+        /*******************************按钮******************************/
+        //新增
+        function addBtn(mid) {
+            win.open("/admin/sysbutton/addedit?mid=" + mid, 550, 550, "新增");
+        }
+        //编辑
+        function editBtn(id) {
+            win.open("/admin/sysbutton/addedit?id=" + id, 550, 550, "编辑");
+        }
+        //删除
+        function delBtn(id, obj) {
+            win.confirm("确认要删除吗？", function () {
+                $.post("/admin/sysbutton/remove", { id: id }, function (res) {
+                    if (res.code == 0) {
+                        $(obj).parent().parent().parent().remove();
+                    } else {
+                        win.alert("删除失败");
+                    }
+                });
+            });
+        }
+        //修改排序
+        function updateBtnSort(id, obj) {
+            $.post("/admin/sysbutton/updatesort", { id: id, sort: $(obj).val() }, function (res) { });
+        }
+        //获取菜单按钮
+        function getBtnModel(obj, id) {
+            if (id > 0) {
+                $("#td" + id).html(obj.buttonName);
+                $("#td" + id).parent().find("input[name='sort']").val(obj.sort);
+            } else {
+                var btnHtml = "<tr>";
+                btnHtml += "<td>" + obj.buttonName + "</td>";
+                btnHtml += "<td>";
+                btnHtml += "<div class=\"layui-btn-group\">";
+                btnHtml += "<button class=\"layui-btn layui-btn-primary layui-btn-sm\" onclick=\"editBtn(" + obj.id + ")\" title=\"编辑\">";
+                btnHtml += "<i class=\"layui-icon\">&#xe642;</i>";
+                btnHtml += "</button>";
+                btnHtml += "<button class=\"layui-btn layui-btn-primary layui-btn-sm\" onclick=\"delBtn(" + obj.id + ",this)\" title=\"删除\">";
+                btnHtml += "<i class=\"layui-icon\">&#xe640;</i>";
+                btnHtml += "</button>";
+                btnHtml += "</div>";
+                btnHtml += "<div style=\"display:inline-block;width:80px;\">";
+                btnHtml += "<input type=\"number\" placeholder=\"排序\" class=\"layui-input\" style=\"height:30px;\" value=\"" + obj.sort + "\" onchange=\"updateBtnSort(" + obj.id + ",this)\" />";
+                btnHtml += "</div>";
+                btnHtml += "</td>";
+                btnHtml += "</tr>";
+                $("#tbd" + obj.menuId).append(btnHtml);
+            }
+        }
+    </script>
+}

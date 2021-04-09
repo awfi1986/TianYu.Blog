@@ -1,0 +1,14 @@
+packages
+unpackage
+bin
+obj
+Service References
+App_Data
+UploadPdf
+UploadFile
+DownTemp
+log
+.vs
+/README
+*.user
+*.pdb

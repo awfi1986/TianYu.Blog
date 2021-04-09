@@ -1,0 +1,272 @@
+﻿@model List<TianYu.Blog.Domain.ViewModel.SysMenuViewModel>
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>草堂笔记管理系统</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <script src="/adminres/Scripts/jquery-3.3.1.min.js"></script>
+    <script src="/adminres/Scripts/jquery-migrate-1.2.1.js"></script>
+    <script src="/adminres/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <link href="/adminres/layui/css/layui.css" rel="stylesheet" />
+    <link href="/adminres/layui/css/admin.css" rel="stylesheet" />
+    <script src="/adminres/layui/layui.js"></script>
+    <!--弹出层JS文件-->
+    <script src="/adminres/layer/layer.js"></script>
+    <script src="/adminres/layer/layer.tools.js"></script>
+    <!--百度文本编辑器JS文件-->
+    <script charset="utf-8" src="/adminres/Scripts/ueditor/ueditor.config.js"></script>
+    <script charset="utf-8" src="/adminres/Scripts/ueditor/ueditor.all.js"></script>
+    <script charset="utf-8" src="/adminres/Scripts/ueditor/lang/zh-cn/zh-cn.js"></script>
+    <script src="/adminres/Scripts/framework.js"></script>
+    <!--树形下拉列表JS文件-->
+    <link href="/adminres/Scripts/zTree/css/zTreeStyle/zTreeStyle.css" rel="stylesheet" />
+    <link href="/adminres/Scripts/zTree/css/demo.css" rel="stylesheet" />
+    <script src="/adminres/Scripts/zTree/js/jquery.ztree.core-3.1.js" charset="utf-8"></script>
+    <script src="/adminres/Scripts/zTree/js/jquery.ztree.excheck-3.1.js"></script>
+    <script src="/adminres/Scripts/zTree/js/jquery.ztree.all-3.1.js"></script>
+    <!--ajax表单提交JS文件-->
+    <script src="/adminres/Scripts/jquery.form.min.js"></script>
+    <style>
+        .layui-side-menu .layui-nav { width: 180px; }
+        .layadmin-pagetabs, .layui-layout-admin .layui-body, .layui-layout-admin .layui-footer, .layui-layout-admin .layui-layout-left { left: 180px }
+        .layui-side-menu .layui-side-scroll { width: 200px }
+    </style>
+</head>
+<body class="layui-layout-body">
+    <div id="LAY_app">
+        <div class="layui-layout layui-layout-admin">
+            <!-- 头部区域 -->
+            <div class="layui-header" style="background:#20222A;">
+                <ul class="layui-nav layui-layout-left">
+                    <li class="layui-nav-item layadmin-flexible" lay-unselect>
+                        <a href="javascript:;" layadmin-event="flexible" title="侧边伸缩">
+                            <i class="layui-icon layui-icon-shrink-right" id="LAY_app_flexible" style="color:#fff;"></i>
+                        </a>
+                    </li>
+                </ul>
+                <ul class="layui-nav layui-layout-right" lay-filter="layadmin-layout-right">
+                    <li class="layui-nav-item" lay-unselect>
+                        <a href="javascript:;">
+                            <cite style="color:#fff;">@ViewBag.LoginName</cite>
+                        </a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="javascript:;" onclick="onUpdatePwd()">修改密码</a></dd>
+                            <hr>
+                            <dd layadmin-event="logout" style="text-align: center;"><a onclick="ouOut()">退出</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item layui-hide-xs" lay-unselect>
+                        <a href="javascript:;" layadmin-event="about"><i class="layui-icon layui-icon-more-vertical" style="color:#fff;"></i></a>
+                    </li>
+                    <li class="layui-nav-item layui-show-xs-inline-block layui-hide-sm" lay-unselect>
+                        <a href="javascript:;" layadmin-event="more"><i class="layui-icon layui-icon-more-vertical" style="color:#fff;"></i></a>
+                    </li>
+                </ul>
+            </div>
+            <!-- 侧边菜单 -->
+            <div class="layui-side layui-side-menu">
+                <div class="layui-side-scroll">
+                    <div class="layui-logo" lay-href="/gx/home/main">
+                        <span>草堂笔记管理系统<span style="font-size:12px;">V1.0</span></span>
+                    </div>
+                    <ul class="layui-nav layui-nav-tree" lay-shrink="all" id="LAY-system-side-menu" lay-filter="layadmin-system-side-menu">
+                        @if (Model != null)
+                        {
+                            int index = 0;
+                            foreach (var item in Model.Where(t => t.ParentId == -1))
+                            {
+                                <li data-name="home" class="layui-nav-item @(index==0?"layui-nav-itemed":"")">
+                                    <a href="javascript:;" lay-tips="@item.MenuName" lay-direction="@item.Id" lay-type="pnav">
+                                        <i class="layui-icon @item.MenuIcon"></i>
+                                        <cite>@item.MenuName</cite>
+                                    </a>
+                                    <dl class="layui-nav-child">
+                                        @foreach (var node in Model.Where(t => t.ParentId == item.Id))
+                                        {
+                                            var tag = (node.MenuUrl.IndexOf('?') == -1) ? "?" : "&";
+                                            <dd>
+                                                <a lay-href="/admin/@node.MenuUrl@(tag)mid=@node.Id&pid=@node.ParentId" lay-id="@node.Id">@node.MenuName</a>
+                                            </dd>
+                                        }
+                                    </dl>
+                                </li>
+                                index++;
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+            <!-- 页面标签 -->
+            <div class="layadmin-pagetabs" id="LAY_app_tabs">
+                <div class="layui-icon layadmin-tabs-control layui-icon-prev" layadmin-event="leftPage" id="leftPage"></div>
+                <div class="layui-icon layadmin-tabs-control layui-icon-next" layadmin-event="rightPage" id="rightPage"></div>
+                <div class="layui-icon layadmin-tabs-control layui-icon-down">
+                    <ul class="layui-nav layadmin-tabs-select" lay-filter="layadmin-pagetabs-nav">
+                        <li class="layui-nav-item" lay-unselect>
+                            <a href="javascript:;"></a>
+                            <dl class="layui-nav-child layui-anim-fadein">
+                                <dd layadmin-event="closeThisTabs"><a href="javascript:;" onclick="onCloseTab(1)">关闭当前页</a></dd>
+                                <dd layadmin-event="closeOtherTabs"><a href="javascript:;" onclick="onCloseTab(2)">关闭其它页</a></dd>
+                                <dd layadmin-event="closeAllTabs"><a href="javascript:;" onclick="onCloseTab(3)">关闭全部页</a></dd>
+                            </dl>
+                        </li>
+                    </ul>
+                </div>
+                <div class="layui-tab" lay-unauto lay-allowClose="true" lay-filter="layadmin-layout-tabs">
+                    <ul class="layui-tab-title" id="LAY_app_tabsheader">
+                        <li lay-id="home" lay-attr="/admin/home/main" class="layui-this">
+                            <i class="layui-icon layui-icon-home"></i>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <!-- 主体内容 -->
+            <div class="layui-body" id="LAY_app_body">
+                <div class="layadmin-tabsbody-item layui-show">
+                    <iframe src="/admin/home/main" frameborder="0" class="layadmin-iframe"></iframe>
+                </div>
+            </div>
+            <!-- 辅助元素，一般用于移动设备下遮罩 -->
+            <div class="layadmin-body-shade" layadmin-event="shade"></div>
+        </div>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+    var element, curTabIndex = 0;
+    $(function () {
+        $("#rightPage").click(function () {
+            var ulWidth = $("#LAY_app_tabsheader").width();
+            var liWidth = 0;
+            $("#LAY_app_tabsheader li").each(function () {
+                liWidth += $(this).outerWidth();
+            });
+            var left = $("#LAY_app_tabsheader").position().left;
+            if (left == 40) left = 0;
+            if (liWidth + left - 40 > ulWidth) {
+                $("#LAY_app_tabsheader").css("left", (0 - (liWidth + left - 40) / 2) + "px");
+            }
+        });
+
+        $("#leftPage").click(function () {
+            var ulWidth = $("#LAY_app_tabsheader").width();
+            var liWidth = 0;
+            $("#LAY_app_tabsheader li").each(function () {
+                liWidth += $(this).outerWidth();
+            });
+            var left = $("#LAY_app_tabsheader").position().left;
+            if (left < 0) {
+                if (left + ulWidth > 0) {
+                    $("#LAY_app_tabsheader").css("left", "0");
+                } else {
+                    $("#LAY_app_tabsheader").css("left", (left + (liWidth + left) / 2) + "px");
+                }
+            } else {
+                $("#LAY_app_tabsheader").css("left", "0");
+            }
+        });
+
+        //初始化
+        layui.use('element', function () {
+            var $ = layui.jquery;
+            element = layui.element;
+
+            //监听菜单单击事件
+            element.on('nav(layadmin-system-side-menu)', function (elem) {
+                var name = $(elem[0]).text();
+                var id = $(elem[0]).attr("lay-id");
+                var url = $(elem[0]).attr("lay-href");
+                var ltype = $(elem[0]).attr("lay-type");
+                if (ltype != "pnav") {
+                    if ($("#LAY_app_tabsheader li[lay-id='lay" + id + "']").length > 0) {
+                        element.tabChange('layadmin-layout-tabs', "lay" + id);
+                    } else {
+                        var content = "<div class=\"layadmin-tabsbody-item\"><iframe src=\"" + url + "\" frameborder=\"0\" class=\"layadmin-iframe\"></iframe></div>";
+                        element.tabAdd('layadmin-layout-tabs', {
+                            title: name,
+                            content: content,
+                            id: "lay" + id
+                        });
+                        element.tabChange('layadmin-layout-tabs', "lay" + id);
+                        var objIfrm = $(content);
+                        $("#LAY_app_body").append(objIfrm);
+                        objIfrm.addClass("layui-show").siblings().removeClass("layui-show");
+                    }
+                    element.render("tab", "layadmin-layout-tabs");
+                } else {
+                    if ($("#LAY_app_flexible").hasClass("layui-icon-spread-left")) {
+                        showHideMenu();
+                    }
+                }
+            });
+            //监听tab切换事件
+            element.on('tab(layadmin-layout-tabs)', function (data) {
+                curTabIndex = data.index;
+                $("#LAY_app_body div:eq(" + data.index + ")").addClass("layui-show").siblings().removeClass("layui-show");
+            });
+            //监听tab删除事件
+            element.on('tabDelete(layadmin-layout-tabs)', function (data) {
+                $("#LAY_app_body div:eq(" + data.index + ")").remove();
+            });
+        });
+
+        $(".layadmin-flexible").click(function () {
+            showHideMenu()
+        });
+    });
+    //显示隐藏菜单
+    function showHideMenu() {
+        $("#LAY_app").toggleClass("layadmin-side-shrink");
+        if ($("#LAY_app_flexible").hasClass("layui-icon-shrink-right")) {
+            $("#LAY_app_flexible").removeClass("layui-icon-shrink-right").addClass("layui-icon-spread-left");
+        } else {
+            $("#LAY_app_flexible").removeClass("layui-icon-spread-left").addClass("layui-icon-shrink-right");
+        }
+    }
+    //关闭tab
+    function onCloseTab(closeType) {
+        if (closeType == 1) {
+            if (curTabIndex != 0) {
+                $("#LAY_app_tabsheader li:eq(" + curTabIndex + ")").remove();
+                $("#LAY_app_body .layadmin-tabsbody-item:eq(" + curTabIndex + ")").remove();
+                curTabIndex = curTabIndex - 1;
+                $("#LAY_app_tabsheader li:eq(" + curTabIndex + ")").addClass("layui-this");
+                $("#LAY_app_body .layadmin-tabsbody-item:eq(" + curTabIndex + ")").addClass("layui-show");
+            }
+        } else if (closeType == 2) {
+            $("#LAY_app_tabsheader li").each(function () {
+                if ($(this).index() != 0 && $(this).index() != curTabIndex) {
+                    $("#LAY_app_body .layadmin-tabsbody-item:eq(" + $(this).index() + ")").remove();
+                    $(this).remove();
+                }
+            });
+        } else {
+            $("#LAY_app_tabsheader li").each(function () {
+                if ($(this).index() != 0) {
+                    $("#LAY_app_body .layadmin-tabsbody-item:eq(" + $(this).index() + ")").remove();
+                    $(this).remove();
+                }
+            });
+            curTabIndex = 0;
+            $("#LAY_app_tabsheader li:eq(" + curTabIndex + ")").addClass("layui-this");
+            $("#LAY_app_body .layadmin-tabsbody-item:eq(" + curTabIndex + ")").addClass("layui-show");
+        }
+        element.render("tab", "layadmin-layout-tabs");
+    }
+    //修改密码
+    function onUpdatePwd() {
+        win.open("/admin/sysuser/setuserinfo", 550, 450, "基本资料");
+    }
+    //退出
+    function ouOut() {
+        win.confirm("确认要退出吗？", function () {
+            window.location = "/admin/login/LogOut";
+        });
+    }
+</script>

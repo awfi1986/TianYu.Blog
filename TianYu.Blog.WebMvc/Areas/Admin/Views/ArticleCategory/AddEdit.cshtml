@@ -1,0 +1,113 @@
+﻿@model TianYu.Blog.Domain.DomainModel.ArticleCategory
+@{
+    ViewBag.Title = "新增/编辑";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout_Edit.cshtml";
+}
+@section Styles{
+    <link href="/adminres/Scripts/zTree/css/zTreeStyle/zTreeStyle.css" rel="stylesheet" />
+    <link href="/adminres/Scripts/zTree/css/demo.css" rel="stylesheet" />
+}
+<form class="layui-form" method="post" action="/admin/articlecategory/save" id="myForm" autocomplete="off">
+    <input type="hidden" value="@Model.Id" name="Id" />
+    <input type="hidden" value="@Model.ParentId" name="ParentId" /> 
+    <input type="hidden" value="@Model.Level" name="Level" />
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>父级名称</label>
+        <div class="layui-input-block">
+            <input type="text" required lay-verify="required" readonly id="txtParent" autocomplete="off" class="layui-input" value="@ViewBag.ParentName" onclick="showCategory();">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"><span style="color:red;">*</span>分类名称</label>
+        <div class="layui-input-block">
+            <input type="text" name="Name" required lay-verify="required" autocomplete="off" class="layui-input" maxlength="20" value="@Model.Name">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">排序</label>
+        <div class="layui-input-block">
+            <input type="text" name="Sort" required lay-verify="number" autocomplete="off" class="layui-input" maxlength="5" value="@Model.Sort">
+        </div>
+    </div>
+    <div class="layui-footer">
+        <button type="button" class="layui-btn layui-btn-primary" onclick="win.close()">关闭</button>
+        <button type="button" class="layui-btn" lay-submit lay-filter="formSubmit">保存</button>
+    </div>
+</form>
+<div id="CategoryList" class="menuContent" style="display: none; position: absolute;">
+    <ul id="treeCategoryList" class="ztree" style="margin-top: 0;"></ul>
+</div>
+<input type="hidden" id="txtCategoryTree" value="@ViewBag.TreeJson" />
+@section Scripts{
+    <script src="/adminres/Scripts/zTree/js/jquery.ztree.core-3.1.js" charset="utf-8"></script>
+    <script src="/adminres/Scripts/zTree/js/jquery.ztree.excheck-3.1.js"></script>
+    <script src="/adminres/Scripts/zTree/js/jquery.ztree.all-3.1.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            layui.use('form', function () {
+                var form = layui.form;
+                form.verify($.verify);
+                //监听提交
+                form.on('submit(formSubmit)', function (data) {
+                    win.showLoading("正在保存...");
+
+                    $("#myForm").ajaxSubmit(function (res) {
+                        win.hideLoading();
+                        if (res.code == 0) {
+                            parent.getList();
+                            parent.win.success("保存成功");
+                            win.close();
+                        } else {
+                            win.alert(res.message);
+                        }
+                    });
+                    return false;
+                });
+            });
+
+            var categorySetting = {
+                view: {
+                    dblClickExpand: false
+                },
+                data: {
+                    simpleData: {
+                        enable: true
+                    }
+                },
+                callback: {
+                    onClick: onCategoryClick
+                }
+            };
+            //初始化树形分类
+            var categoryNodes = eval($("#txtCategoryTree").val());
+            $.fn.zTree.init($("#treeCategoryList"), categorySetting, categoryNodes);
+        });
+
+        //点击选择分类
+        function onCategoryClick(e, treeId, treeNode) {
+            $("#myForm input[name='ParentId']").val(treeNode.id);
+            $("#myForm input[name='Level']").val(treeNode.level + 1);
+            $("#txtParent").val(treeNode.name);
+            hideCategory();
+        }
+        //显示分类
+        function showCategory() {
+            var cityObj = $("#txtParent");
+            var cityOffset = $("#txtParent").offset();
+            $("#treeCategoryList").width(cityObj.width());
+            $("#CategoryList").css({ left: cityOffset.left + "px", top: cityOffset.top + cityObj.outerHeight() + "px" }).slideDown("fast");
+            $("body").bind("mousedown", onAddCategoryBodyDown);
+        }
+        //隐藏分类
+        function hideCategory() {
+            $("#CategoryList").fadeOut("fast");
+            $("body").unbind("mousedown", onAddCategoryBodyDown);
+        }
+        //隐藏分类
+        function onAddCategoryBodyDown(event) {
+            if (!(event.target.id == "menuBtn" || event.target.id == "CategoryList" || $(event.target).parents("#CategoryList").length > 0)) {
+                hideCategory();
+            }
+        }
+    </script>
+}
